@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # One-time replica-set initialization
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+    command: >
+      mongosh --host mongodb:27017 --eval
+      "rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]})"
+
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/inventory?replicaSet=rs0
+      - PORT=3000
+      - HOLD_DURATION_MINUTES=15
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+
+volumes:
+  mongo_data:
