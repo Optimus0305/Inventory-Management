@@ -1,3 +1,17 @@
+import Redis from 'ioredis';
+
+/**
+ * Shared Redis client for caching.
+ *
+ * Using default options so the client will establish a connection
+ * automatically when first used. We do NOT set `lazyConnect: true`
+ * together with `enableOfflineQueue: false`, which would require
+ * an explicit `connect()` call and could cause silent cache failures
+ * if forgotten.
+ */
+const redisClient = new Redis();
+
+export default redisClient;
 'use strict';
 
 const Redis = require('ioredis');
