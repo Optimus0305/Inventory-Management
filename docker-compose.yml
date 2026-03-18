@@ -24,7 +24,7 @@ services:
     restart: "no"
     command: >
       mongosh --host mongodb:27017 --eval
-      "rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]})"
+      "try { rs.status(); print('Replica set already initialized'); } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}); print('Replica set initiated'); }"
 
   redis:
     image: redis:7-alpine

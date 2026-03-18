@@ -3,11 +3,21 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const holdsRouter = require('./routes/holds');
 const inventoryRouter = require('./routes/inventory');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+
+const allowedOrigins = process.env.FRONTEND_ORIGIN
+	? process.env.FRONTEND_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+	: ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+app.use(cors({
+	origin: allowedOrigins,
+	methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+}));
 
 app.use(express.json());
 

@@ -26,7 +26,7 @@ A production-quality microservice for managing temporary inventory holds during 
 
 ### DDD .NET Reference Implementation
 
-A companion `.NET 10` Domain-Driven Design implementation lives in `src/` alongside the running Node.js service. It demonstrates:
+A companion `.NET 9` Domain-Driven Design implementation lives in `src/` alongside the running Node.js service. It demonstrates:
 
 - **InventoryHold.Contracts** — DTOs, requests, responses
 - **InventoryHold.Domain** — Aggregates (`Hold`, `InventoryItem`), domain events, exceptions
@@ -126,6 +126,7 @@ All settings are configurable via environment variables:
 | `PORT` | `3000` | API server port |
 | `HOLD_DURATION_MINUTES` | `15` | Default hold duration |
 | `CACHE_TTL_SECONDS` | `60` | Redis cache TTL |
+| `FRONTEND_ORIGIN` | `http://localhost:5173,http://127.0.0.1:5173` | Allowed CORS origin(s) for the frontend |
 
 ---
 
@@ -225,7 +226,7 @@ On startup, the API seeds 7 products if they don't already exist:
 │   ├── holdService.test.js     # Unit tests (business logic)
 │   └── holdController.test.js  # HTTP integration tests
 ├── frontend/                   # React/TypeScript/Vite SPA
-├── src/InventoryHold.*/        # .NET 10 DDD implementation
+├── src/InventoryHold.*/        # .NET 9 DDD implementation
 ├── tests/InventoryHold.Tests/  # .NET xUnit tests
 ├── docker-compose.yml
 ├── Dockerfile
