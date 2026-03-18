@@ -3,10 +3,11 @@
 require('dotenv').config();
 
 const app = require('./src/app');
-const { connectDB } = require('./src/config/database');
+const { connectDB, disconnectDB } = require('./src/config/database');
 const { seedDatabase } = require('./src/config/seed');
 const HoldExpiryWorker = require('./src/workers/holdExpiryWorker');
 const messaging = require('./src/services/messagingService');
+const cacheService = require('./src/services/cacheService');
 
 const PORT = process.env.PORT || 3000;
 
@@ -28,8 +29,32 @@ const PORT = process.env.PORT || 3000;
   });
 
   const shutdown = async () => {
-    worker.stop();
-    await messaging.disconnect();
+    try {
+      worker.stop();
+    } catch (err) {
+      console.error('Error stopping worker:', err);
+    }
+
+    try {
+      await messaging.disconnect();
+    } catch (err) {
+      console.error('Error disconnecting messaging service:', err);
+    }
+
+    try {
+      await disconnectDB();
+    } catch (err) {
+      console.error('Error disconnecting MongoDB:', err);
+    }
+
+    if (cacheService && typeof cacheService.disconnect === 'function') {
+      try {
+        await cacheService.disconnect();
+      } catch (err) {
+        console.error('Error disconnecting cache service:', err);
+      }
+    }
+
     process.exit(0);
   };
 
