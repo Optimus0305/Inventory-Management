@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 const inventoryRepo = require('../repositories/inventoryRepository');
 const holdRepo = require('../repositories/holdRepository');
+const cache = require('./cacheService');
+const messaging = require('./messagingService');
 
 const HOLD_DURATION_MS =
   parseInt(process.env.HOLD_DURATION_MINUTES || '15', 10) * 60 * 1000;
@@ -93,6 +95,16 @@ async function createHold({ productId, quantity, userId }) {
       );
     });
 
+    // ── Publish event & invalidate cache (outside transaction) ───────────────
+    await cache.invalidateInventory(productId);
+    await messaging.publishEvent('HoldCreated', {
+      holdId: hold.holdId,
+      productId: hold.productId,
+      userId: hold.userId,
+      quantity: hold.quantity,
+      expiresAt: hold.expiresAt,
+    });
+
     return hold;
   } finally {
     session.endSession();
@@ -153,6 +165,16 @@ async function releaseHold(holdId) {
       );
     });
 
+    // ── Publish event & invalidate cache (outside transaction) ───────────────
+    await cache.invalidateInventory(releasedHold.productId);
+    await cache.invalidateHold(holdId);
+    await messaging.publishEvent('HoldReleased', {
+      holdId: releasedHold.holdId,
+      productId: releasedHold.productId,
+      userId: releasedHold.userId,
+      quantity: releasedHold.quantity,
+    });
+
     return releasedHold;
   } finally {
     session.endSession();
@@ -181,6 +203,12 @@ async function releaseHold(holdId) {
 async function getHold(holdId) {
   if (!holdId || typeof holdId !== 'string') {
     throw new HoldError('holdId is required', 400);
+  }
+
+  // ── Cache read (active holds only) ──────────────────────────────────────
+  const cached = await cache.getHold(holdId);
+  if (cached && cached.status === 'active' && new Date(cached.expiresAt) > new Date()) {
+    return cached;
   }
 
   let hold = await holdRepo.findByHoldId(holdId);
@@ -214,10 +242,24 @@ async function getHold(holdId) {
       if (hold.status === 'active') {
         // Our transaction found nothing to expire (lost the race).
         hold = await holdRepo.findByHoldId(holdId);
+      } else if (hold.status === 'expired') {
+        // Publish expiry event & invalidate cache (outside transaction)
+        await cache.invalidateInventory(hold.productId);
+        await cache.invalidateHold(holdId);
+        await messaging.publishEvent('HoldExpired', {
+          holdId: hold.holdId,
+          productId: hold.productId,
+          userId: hold.userId,
+          quantity: hold.quantity,
+          expiredAt: hold.expiresAt,
+        });
       }
     } finally {
       session.endSession();
     }
+  } else if (hold.status === 'active') {
+    // Cache active holds for fast subsequent reads
+    await cache.setHold(holdId, hold);
   }
 
   return hold;
@@ -243,6 +285,7 @@ async function expireAllStaleHolds() {
 
   for (const hold of stale) {
     const session = await mongoose.startSession();
+    let expiredHoldData = null;
     try {
       await session.withTransaction(async () => {
         const expiredHold = await holdRepo.markExpired(hold.holdId, session);
@@ -252,10 +295,24 @@ async function expireAllStaleHolds() {
             expiredHold.quantity,
             session
           );
+          expiredHoldData = expiredHold;
           expired++;
         }
         // else: already processed by a concurrent request – skip silently
       });
+
+      // Publish event & invalidate cache after successful transaction
+      if (expiredHoldData) {
+        await cache.invalidateInventory(expiredHoldData.productId);
+        await cache.invalidateHold(expiredHoldData.holdId);
+        await messaging.publishEvent('HoldExpired', {
+          holdId: expiredHoldData.holdId,
+          productId: expiredHoldData.productId,
+          userId: expiredHoldData.userId,
+          quantity: expiredHoldData.quantity,
+          expiredAt: expiredHoldData.expiresAt,
+        });
+      }
     } catch (err) {
       errors++;
     } finally {

@@ -14,6 +14,20 @@
 jest.mock('../src/repositories/inventoryRepository');
 jest.mock('../src/repositories/holdRepository');
 
+// Mock cache and messaging services so tests don't try to connect to Redis/RabbitMQ
+jest.mock('../src/services/cacheService', () => ({
+  getHold: jest.fn().mockResolvedValue(null),
+  setHold: jest.fn().mockResolvedValue(undefined),
+  invalidateInventory: jest.fn().mockResolvedValue(undefined),
+  invalidateHold: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../src/services/messagingService', () => ({
+  publishEvent: jest.fn().mockResolvedValue(undefined),
+  connect: jest.fn().mockResolvedValue(undefined),
+  disconnect: jest.fn().mockResolvedValue(undefined),
+}));
+
 // Mock mongoose.startSession to return a lightweight fake session whose
 // withTransaction() just calls the callback — good enough for unit tests.
 const mockSession = {

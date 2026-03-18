@@ -26,17 +26,55 @@ services:
       mongosh --host mongodb:27017 --eval
       "rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]})"
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   api:
     build: .
     ports:
       - "3000:3000"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/inventory?replicaSet=rs0
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - PORT=3000
       - HOLD_DURATION_MINUTES=15
+      - CACHE_TTL_SECONDS=60
     depends_on:
       mongo-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   mongo_data:
+  redis_data:
+  rabbitmq_data:

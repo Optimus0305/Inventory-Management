@@ -73,9 +73,17 @@ async function createInventoryItem(data) {
   return InventoryItem.create(data);
 }
 
+/**
+ * @returns {Promise<Array<import('../models/InventoryItem')>>}
+ */
+async function findAll() {
+  return InventoryItem.find({}).sort({ name: 1 });
+}
+
 module.exports = {
   deductReserved,
   restoreReserved,
   findByProductId,
   createInventoryItem,
+  findAll,
 };

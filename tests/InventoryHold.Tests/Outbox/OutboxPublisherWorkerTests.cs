@@ -37,7 +37,8 @@ public sealed class OutboxPublisherWorkerTests
         services.AddScoped<IEventPublisher>(_ => _publisher.Object);
         var sp = services.BuildServiceProvider();
 
-        return new OutboxPublisherWorker(sp, settings, NullLogger<OutboxPublisherWorker>.Instance);
+        return new OutboxPublisherWorker(
+            sp.GetRequiredService<IServiceScopeFactory>(), settings, NullLogger<OutboxPublisherWorker>.Instance);
     }
 
     private static OutboxMessage BuildMessage(string eventType, int retryCount = 0)

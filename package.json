@@ -10,8 +10,10 @@
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles"
   },
   "dependencies": {
+    "amqplib": "^0.10.9",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
+    "ioredis": "^5.10.0",
     "mongoose": "^8.2.0",
     "uuid": "^9.0.0"
   },

@@ -31,14 +31,14 @@ public sealed class InventoryHoldAggregateTests
     public void Create_ZeroQuantity_ThrowsDomainException()
     {
         Assert.Throws<DomainException>(() =>
-            InventoryHold.Create("h1", "prod-1", "cust-1", 0, TimeSpan.FromMinutes(15)));
+            Hold.Create("h1", "prod-1", "cust-1", 0, TimeSpan.FromMinutes(15)));
     }
 
     [Fact]
     public void Create_NegativeDuration_ThrowsDomainException()
     {
         Assert.Throws<DomainException>(() =>
-            InventoryHold.Create("h1", "prod-1", "cust-1", 1, TimeSpan.FromSeconds(-1)));
+            Hold.Create("h1", "prod-1", "cust-1", 1, TimeSpan.FromSeconds(-1)));
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public sealed class InventoryHoldAggregateTests
     [Fact]
     public void Create_EventId_IsUniquePerEvent()
     {
-        var hold1 = InventoryHold.Create("h1", "p", "c", 1, TimeSpan.FromMinutes(1));
-        var hold2 = InventoryHold.Create("h2", "p", "c", 1, TimeSpan.FromMinutes(1));
+        var hold1 = Hold.Create("h1", "p", "c", 1, TimeSpan.FromMinutes(1));
+        var hold2 = Hold.Create("h2", "p", "c", 1, TimeSpan.FromMinutes(1));
 
         var id1 = hold1.DrainDomainEvents()[0].EventId;
         var id2 = hold2.DrainDomainEvents()[0].EventId;

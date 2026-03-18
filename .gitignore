@@ -1,4 +1,18 @@
+# Node.js
 node_modules/
 .env
 coverage/
 *.log
+
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# React / Vite frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# OS artifacts
+.DS_Store
+Thumbs.db
