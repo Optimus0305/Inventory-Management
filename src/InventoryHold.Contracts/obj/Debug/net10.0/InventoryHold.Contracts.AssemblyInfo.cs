@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("InventoryHold.Contracts")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+99e45214520a93d62a81d86808b4778f58dff484")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+909489320f6c63989ef5f8232d35de9c282dc37f")]
 [assembly: System.Reflection.AssemblyProductAttribute("InventoryHold.Contracts")]
 [assembly: System.Reflection.AssemblyTitleAttribute("InventoryHold.Contracts")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
