@@ -1,0 +1,6 @@
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.csproj.AssemblyReference.cache
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.AssemblyInfoInputs.cache
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.AssemblyInfo.cs
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.csproj.CoreCompileInputs.cache
+/home/runner/work/Inventory-Management/Inventory-Management/src/InventoryHold.Infrastructure/obj/Debug/net10.0/InventoryHold.Infrastructure.sourcelink.json
