@@ -24,7 +24,50 @@ const { HoldError } = jest.requireActual('../src/services/holdService');
 jest.mock('../src/repositories/inventoryRepository');
 const inventoryRepo = require('../src/repositories/inventoryRepository');
 
+// Mock cache and messaging so tests don't need Redis/RabbitMQ
+jest.mock('../src/services/cacheService', () => ({
+  getInventoryList: jest.fn().mockResolvedValue(null),
+  setInventoryList: jest.fn().mockResolvedValue(undefined),
+  getInventoryItem: jest.fn().mockResolvedValue(null),
+  setInventoryItem: jest.fn().mockResolvedValue(undefined),
+  invalidateInventory: jest.fn().mockResolvedValue(undefined),
+  invalidateHold: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../src/services/messagingService', () => ({
+  publishEvent: jest.fn().mockResolvedValue(undefined),
+  connect: jest.fn().mockResolvedValue(undefined),
+  disconnect: jest.fn().mockResolvedValue(undefined),
+}));
+
 beforeEach(() => jest.clearAllMocks());
+
+// ─────────────────────────────────────────────────────────────────
+// GET /api/inventory
+// ─────────────────────────────────────────────────────────────────
+
+describe('GET /api/inventory', () => {
+  test('200 with list of all inventory items', async () => {
+    inventoryRepo.findAll.mockResolvedValue([
+      { productId: 'prod-1', name: 'Widget', quantity: 10, reserved: 3, available: 7 },
+      { productId: 'prod-2', name: 'Gadget', quantity: 5, reserved: 0, available: 5 },
+    ]);
+
+    const res = await request(app).get('/api/inventory');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data).toHaveLength(2);
+  });
+
+  test('200 with empty list when no inventory', async () => {
+    inventoryRepo.findAll.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/inventory');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(0);
+  });
+});
 
 // ─────────────────────────────────────────────────────────────────
 // GET /api/inventory/:productId

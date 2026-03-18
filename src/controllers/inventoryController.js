@@ -1,6 +1,33 @@
 'use strict';
 
 const inventoryRepo = require('../repositories/inventoryRepository');
+const cache = require('../services/cacheService');
+
+/**
+ * GET /api/inventory
+ * Return all inventory items with available stock.
+ * Results are cached for fast repeated reads.
+ *
+ * 200 – items returned
+ */
+async function list(req, res, next) {
+  try {
+    // ── Cache read ───────────────────────────────────────────────────────────
+    const cached = await cache.getInventoryList();
+    if (cached) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
+    }
+
+    const items = await inventoryRepo.findAll();
+
+    // ── Cache write ──────────────────────────────────────────────────────────
+    await cache.setInventoryList(items);
+
+    return res.status(200).json({ success: true, data: items });
+  } catch (err) {
+    return next(err);
+  }
+}
 
 /**
  * GET /api/inventory/:productId
@@ -11,13 +38,25 @@ const inventoryRepo = require('../repositories/inventoryRepository');
  */
 async function getOne(req, res, next) {
   try {
-    const item = await inventoryRepo.findByProductId(req.params.productId);
+    const { productId } = req.params;
+
+    // ── Cache read ───────────────────────────────────────────────────────────
+    const cached = await cache.getInventoryItem(productId);
+    if (cached) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
+    }
+
+    const item = await inventoryRepo.findByProductId(productId);
     if (!item) {
       return res.status(404).json({
         success: false,
-        error: `Product '${req.params.productId}' not found`,
+        error: `Product '${productId}' not found`,
       });
     }
+
+    // ── Cache write ──────────────────────────────────────────────────────────
+    await cache.setInventoryItem(productId, item);
+
     return res.status(200).json({ success: true, data: item });
   } catch (err) {
     return next(err);
@@ -43,10 +82,14 @@ async function create(req, res, next) {
       });
     }
     const item = await inventoryRepo.createInventoryItem({ productId, name, quantity });
+
+    // Invalidate cache after mutation
+    await cache.invalidateInventory();
+
     return res.status(201).json({ success: true, data: item });
   } catch (err) {
     return next(err);
   }
 }
 
-module.exports = { getOne, create };
+module.exports = { list, getOne, create };
