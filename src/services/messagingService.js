@@ -1,6 +1,7 @@
 'use strict';
 
 const amqplib = require('amqplib');
+const { randomUUID } = require('crypto');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 
@@ -69,7 +70,7 @@ async function publishEvent(eventType, payload) {
   }
 
   const message = {
-    eventId: require('crypto').randomUUID(),
+    eventId: randomUUID(),
     eventType,
     occurredAt: new Date().toISOString(),
     ...payload,

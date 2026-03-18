@@ -1,17 +1,3 @@
-import Redis from 'ioredis';
-
-/**
- * Shared Redis client for caching.
- *
- * Using default options so the client will establish a connection
- * automatically when first used. We do NOT set `lazyConnect: true`
- * together with `enableOfflineQueue: false`, which would require
- * an explicit `connect()` call and could cause silent cache failures
- * if forgotten.
- */
-const redisClient = new Redis();
-
-export default redisClient;
 'use strict';
 
 const Redis = require('ioredis');
@@ -33,9 +19,10 @@ let _client = null;
 
 function getClient() {
   if (!_client) {
+    // Do NOT use lazyConnect here — with enableOfflineQueue:false and lazyConnect:true
+    // the client never auto-connects and all cache operations silently fail.
+    // Auto-connect is safe because all commands are wrapped in try/catch.
     _client = new Redis(REDIS_URL, {
-      lazyConnect: true,
-      // Silently fail if Redis is unavailable — the API should still work without cache
       enableOfflineQueue: false,
       maxRetriesPerRequest: 1,
     });
@@ -123,8 +110,13 @@ async function invalidateHold(holdId) {
 
 async function disconnect() {
   if (_client) {
-    await _client.quit();
-    _client = null;
+    try {
+      await _client.quit();
+    } catch {
+      // Ignore quit failures (e.g. connection was never established or already broken)
+    } finally {
+      _client = null;
+    }
   }
 }
 
